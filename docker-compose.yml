@@ -1,0 +1,74 @@
+version: '2'
+services:
+
+  #Nginx Service
+  web:
+    container_name: docker-nginx
+    image: nginx:latest
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/sites-enabled:/etc/nginx/conf.d/sites-enabled
+      - ./nginx/logs:/var/log/nginx
+      - ./nginx/ssl:/etc/ssl
+      - ./nginx/certs:/etc/nginx/certs
+      - ../../project:/var/www
+    links:
+      - php
+      - mysql
+      - redis
+      - memcached
+    depends_on: 
+      - php
+  #PHP Service
+
+  php:
+    container_name: docker-php7
+    build:
+      context: ./php
+    # image: devilbox/php-fpm:7.2-prod
+    # image: jsdecena/php72-fpm
+    # image: devilbox/php-fpm:7.3-prod
+    # image: devilbox/php-fpm:7.4-prod
+    restart: always
+    volumes:
+      #- ../app:/code/projects
+      - ../../project:/var/www
+    links:
+      - mysql
+      - redis
+      - memcached
+
+  mysql:
+    container_name: docker-mysql
+    image: mysql:5.6.51
+    ports:
+      - "6666:3306"
+    restart: always
+    volumes:
+      - ./mysql:/var/lib/mysql
+      - ./mysql/dmp:/var/lib/mysql/dmp
+      - ../../project:/var/www
+    environment: 
+      - MYSQL_ROOT_PASSWORD=password
+
+  redis:
+    container_name: docker-redis
+    image: redis:alpine3.13
+    restart: always
+    ports:
+      - "6379"
+    volumes: 
+      - ./redis:/var/lib/redis
+
+  memcached:
+    container_name: docker-memcached
+    image: memcached
+    ports: 
+      - "11212:11211"
+    # volumes:
+    #   - ./.docker/data/memcached:/data/memcached
+    restart: always
